@@ -37,6 +37,10 @@ https://learn.microsoft.com/en-us/windows/wsl/install
 
 Once you are ready, run it in the following way:
 
+Make sure Docker Desktop is running.
+
+Then,
+
 `./run-dev.sh`
 
 You might need to do `chmod +x run-dev.sh`
