@@ -1,0 +1,35 @@
+name: Sync Discord Notification
+
+on:
+  workflow_run:
+    workflows: ["Sync to Hugging Face hub"]
+    branches: [main]
+    types: 
+      - completed
+
+jobs:
+  notify-success:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Send Discord notification
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }} # Make sure to set this Webhook URL in Github Secrets!
+        run: |
+          curl -X POST -H "Content-Type: application/json" \
+          -d "{\"content\": \"🚀 Successfully synced commit $GITHUB_SHA by $GITHUB_ACTOR to the HuggingFace space.\"}" \
+          $DISCORD_WEBHOOK_URL
+
+  notify-failure:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Send Discord notification
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }} # Make sure to set this Webhook URL in Github Secrets!
+        run: |
+          curl -X POST -H "Content-Type: application/json" \
+          -d "{\"content\": \"🚀 Failed to sync commit $GITHUB_SHA by $GITHUB_ACTOR to the HuggingFace space.\"}" \
+          $DISCORD_WEBHOOK_URL

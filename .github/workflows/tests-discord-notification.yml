@@ -1,0 +1,35 @@
+name: Tests Discord Notification
+
+on:
+  workflow_run:
+    workflows: ["Run tests"]
+    branches: [main]
+    types: 
+      - completed
+
+jobs:
+  notify-success:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Send Discord notification
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }} # Make sure to set this Webhook URL in Github Secrets!
+        run: |
+          curl -X POST -H "Content-Type: application/json" \
+          -d "{\"content\": \"🧪 Tests completed successfully for commit $GITHUB_SHA by $GITHUB_ACTOR!\"}" \
+          $DISCORD_WEBHOOK_URL
+
+  notify-failure:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Send Discord notification
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }} # Make sure to set this Webhook URL in Github Secrets!
+        run: |
+          curl -X POST -H "Content-Type: application/json" \
+          -d "{\"content\": \"🧪 Tests failed for commit $GITHUB_SHA by $GITHUB_ACTOR! Please check the Run tests action.\"}" \
+          $DISCORD_WEBHOOK_URL
