@@ -1,4 +1,5 @@
 import gradio as gr
+from pathlib import Path
 from huggingface_hub import InferenceClient
 import os
 
@@ -44,6 +45,12 @@ fancy_css = """
     color: #333;
 }
 """
+def upload_file(filepath):
+    name = Path(filepath).name
+    return [gr.UploadButton(visible=False), gr.DownloadButton(label=f"Download {name}", value=filepath, visible=True)]
+
+def download_file():
+    return [gr.UploadButton(visible=True), gr.DownloadButton(visible=False)]
 
 def respond(
     message,
@@ -123,6 +130,7 @@ chatbot = gr.ChatInterface(
 
 with gr.Blocks(css=fancy_css) as demo:
     with gr.Row():
+        gr.UploadButton()
         gr.Markdown("<h1 style='text-align: center;'>🌟 Fancy AI Chatbot 🌟</h1>")
         gr.LoginButton()
     chatbot.render()
