@@ -37,5 +37,6 @@ https://learn.microsoft.com/en-us/windows/wsl/install
 
 Once you are ready, run it in the following way:
 
-1. `docker build -t ds553-cs1 .`
-2. `docker run -p 7860:7860 ds553-cs1 .`
+`./run-dev.sh`
+
+You might need to do `chmod +x run-dev.sh`
