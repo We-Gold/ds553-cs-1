@@ -1,7 +1,13 @@
-import gradio as gr
-from pathlib import Path
-from huggingface_hub import InferenceClient
+from dotenv import load_dotenv
+
+# Load the HF token from .env
+load_dotenv()
+
 import os
+from pathlib import Path
+
+import gradio as gr
+from huggingface_hub import InferenceClient
 
 pipe = None
 stop_inference = False
@@ -45,12 +51,19 @@ fancy_css = """
     color: #333;
 }
 """
+
+
 def upload_file(filepath):
     name = Path(filepath).name
-    return [gr.UploadButton(visible=False), gr.DownloadButton(label=f"Download {name}", value=filepath, visible=True)]
+    return [
+        gr.UploadButton(visible=False),
+        gr.DownloadButton(label=f"Download {name}", value=filepath, visible=True),
+    ]
+
 
 def download_file():
     return [gr.UploadButton(visible=True), gr.DownloadButton(visible=False)]
+
 
 def respond(
     message,
@@ -73,8 +86,9 @@ def respond(
 
     if use_local_model:
         print("[MODE] local")
-        from transformers import pipeline
         import torch
+        from transformers import pipeline
+
         if pipe is None:
             pipe = pipeline("text-generation", model="microsoft/Phi-3-mini-4k-instruct")
 
@@ -89,7 +103,7 @@ def respond(
             top_p=top_p,
         )
 
-        response = outputs[0]["generated_text"][len(prompt):]
+        response = outputs[0]["generated_text"][len(prompt) :]
         yield response.strip()
 
     else:
@@ -122,7 +136,13 @@ chatbot = gr.ChatInterface(
         gr.Textbox(value="You are a friendly Chatbot.", label="System message"),
         gr.Slider(minimum=1, maximum=2048, value=512, step=1, label="Max new tokens"),
         gr.Slider(minimum=0.1, maximum=2.0, value=0.7, step=0.1, label="Temperature"),
-        gr.Slider(minimum=0.1, maximum=1.0, value=0.95, step=0.05, label="Top-p (nucleus sampling)"),
+        gr.Slider(
+            minimum=0.1,
+            maximum=1.0,
+            value=0.95,
+            step=0.05,
+            label="Top-p (nucleus sampling)",
+        ),
         gr.Checkbox(label="Use Local Model", value=False),
     ],
     type="messages",
