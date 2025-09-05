@@ -22,6 +22,9 @@ Spaces link: https://huggingface.co/spaces/wegold/cs553-cs-1
 
 Note: GitHub actions test are DISABLED right now, since it increase our HuggingFace usage.
 
+Note 2: Spaces automatically exposes secrets as environment variables accessible inside the docker container, so you just 
+need to make sure the secret is set for the space.
+
 ## Running Locally
 
 For all development, run locally.

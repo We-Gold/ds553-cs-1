@@ -12,7 +12,7 @@ COPY requirements.txt ./
 RUN pip3 install -r requirements.txt
 
 COPY app.py ./
-COPY .env ./
+COPY .env* ./
 
 EXPOSE 7860
 ENV GRADIO_SERVER_NAME="0.0.0.0"
