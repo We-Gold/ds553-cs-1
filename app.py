@@ -17,9 +17,10 @@ fancy_css = """
 #main-container {
     background-color: #f0f0f0;
     font-family: 'Arial', sans-serif;
+    width: 700px;
 }
 .gradio-container {
-    max-width: 700px;
+    width: 700px;
     margin: 0 auto;
     padding: 20px;
     background: white;
@@ -27,16 +28,18 @@ fancy_css = """
     border-radius: 10px;
 }
 .gr-button {
-    background-color: #4CAF50;
+    background: #8e44ad;
     color: white;
-    border: none;
-    border-radius: 5px;
-    padding: 10px 20px;
+    border-radius: 50px;
+    padding: 12px 24px;
+    font-size: 1.1em;
+    font-weight: bold;
     cursor: pointer;
-    transition: background-color 0.3s ease;
+    transition: all 0.3s ease;
 }
 .gr-button:hover {
-    background-color: #45a049;
+    background: #732d91;
+    transform: translateY(-2px);
 }
 .gr-slider input {
     color: #4CAF50;
@@ -130,30 +133,20 @@ def respond(
             yield response
 
 
-chatbot = gr.ChatInterface(
-    fn=respond,
-    additional_inputs=[
-        gr.Textbox(value="You are a friendly Chatbot.", label="System message"),
-        gr.Slider(minimum=1, maximum=2048, value=512, step=1, label="Max new tokens"),
-        gr.Slider(minimum=0.1, maximum=2.0, value=0.7, step=0.1, label="Temperature"),
-        gr.Slider(
-            minimum=0.1,
-            maximum=1.0,
-            value=0.95,
-            step=0.05,
-            label="Top-p (nucleus sampling)",
-        ),
-        gr.Checkbox(label="Use Local Model", value=False),
-    ],
-    type="messages",
-)
-
 with gr.Blocks(css=fancy_css) as demo:
-    with gr.Row():
-        gr.UploadButton()
-        gr.Markdown("<h1 style='text-align: center;'>🌟 Fancy AI Chatbot 🌟</h1>")
+    with gr.Row(): 
+        gr.Markdown("<h1 style='text-align: center; color: black'>㊗️ HaikuAI ㊗️</h1>") 
         gr.LoginButton()
-    chatbot.render()
+    with gr.Row():
+        upload = gr.UploadButton(label="📂 Upload Audio File", file_types=[".mp3", ".wav"])
+    with gr.Row():
+        submit = gr.Button("Submit") 
+    with gr.Row():
+        output = gr.Textbox(label="Output", lines=5, interactive=False)
+    with gr.Row():
+        checkbox = gr.Checkbox(label="Use Local Model", value=False)
+
+    submit.click(fn=respond, inputs=[upload, checkbox], outputs=output)
 
 if __name__ == "__main__":
     demo.launch()
