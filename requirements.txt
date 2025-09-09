@@ -3,3 +3,4 @@ torch
 gradio[oauth]
 huggingface_hub
 python-dotenv
+pydub
