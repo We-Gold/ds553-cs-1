@@ -73,7 +73,10 @@ def download_file():
 def respond(file, hf_token: gr.OAuthToken):
     global pipe
 
-    input_sound = AudioSegment.from_file(file)
+    try: 
+        input_sound = AudioSegment.from_file(file)
+    except:
+        raise gr.Error("Make sure a valid file is already uploaded.")
 
     input_sound.export("./input.wav", format="wav")
 
