@@ -15,13 +15,13 @@ RUN pip3 install -r requirements.txt
 COPY app.py ./
 COPY .env* ./
 
+# Grant write permissions 
+# https://discuss.huggingface.co/t/permission-denied-for-writing-files-within-spaces/29799/2
 RUN useradd -m -u 1000 user
 USER user
 ENV HOME=/home/user \
 	PATH=/home/user/.local/bin:$PATH
-
 WORKDIR $HOME/app
-
 COPY --chown=user . $HOME/app
 
 EXPOSE 7860

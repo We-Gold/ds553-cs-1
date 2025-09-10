@@ -1,4 +1,3 @@
-import torch
 from dotenv import load_dotenv
 from pydub import AudioSegment
 from transformers import pipeline
@@ -6,16 +5,78 @@ from transformers import pipeline
 # Load the HF token from .env
 load_dotenv()
 
-import os
-from pathlib import Path
-
 import gradio as gr
 from huggingface_hub import InferenceClient
 
-pipe = None
+LOCAL_AUDIO_FILE = "./input.wav"
 
+
+def load_whisper_model():
+    return pipeline(
+        "automatic-speech-recognition", model="openai/whisper-tiny", 
+    )
+
+pipe = load_whisper_model()
+
+def load_audio_file(file):
+    try: 
+        return AudioSegment.from_file(file)
+    except:
+        raise gr.Error("Make sure a valid file is already uploaded.")
+    
+def build_message_prompt(text):
+    system_message = f"""Generate a haiku based on the given text.
+        A haiku is a short, Japanese poem typically with three lines. 
+        It follows a structure of 5 syllables in the first line, 7 in the second, and 5 in the third, 
+        totaling 17 syllables. 
+        Please respond with only the haiku and no additional text. 
+        """
+
+    messages = [{"role": "system", "content": system_message}]
+    messages.append({"role": "user", "content": text})
+
+    return messages
+
+def respond(file, hf_token: gr.OAuthToken):
+    global pipe
+
+    input_sound = load_audio_file(file)
+
+    # Save audio file in wav format (which is compatible with whisper)
+    input_sound.export(LOCAL_AUDIO_FILE, format="wav")
+
+    if pipe is None:
+        pipe = load_whisper_model()
+
+    # Convert the audio to text with the whisper tiny model
+    response = pipe(LOCAL_AUDIO_FILE)
+    text_result = response["text"]
+
+    messages = build_message_prompt(text_result)
+
+    # Convert text to haiku
+    if hf_token is None or not getattr(hf_token, "token", None):
+        yield "⚠️ Please log in with your Hugging Face account first."
+        return
+    
+    client = InferenceClient(token=hf_token.token, model="openai/gpt-oss-20b")
+
+    response = ""
+
+    for chunk in client.chat_completion(
+        messages,
+        stream=True
+    ):
+        choices = chunk.choices
+        token = ""
+        if len(choices) and choices[0].delta.content:
+            token = choices[0].delta.content
+        response += token
+
+        yield response
+    
 # Fancy styling
-fancy_css = """
+CSS = """
 #main-container {
     background-color: #f0f0f0;
     font-family: 'Arial', sans-serif;
@@ -57,84 +118,20 @@ fancy_css = """
 }
 """
 
-
-def upload_file(filepath):
-    name = Path(filepath).name
-    return [
-        gr.UploadButton(visible=False),
-        gr.DownloadButton(label=f"Download {name}", value=filepath, visible=True),
-    ]
-
-
-def download_file():
-    return [gr.UploadButton(visible=True), gr.DownloadButton(visible=False)]
-
-
-def respond(file, hf_token: gr.OAuthToken):
-    global pipe
-
-    try: 
-        input_sound = AudioSegment.from_file(file)
-    except:
-        raise gr.Error("Make sure a valid file is already uploaded.")
-
-    input_sound.export("./input.wav", format="wav")
-
-    if pipe is None:
-        pipe = pipeline(
-            "automatic-speech-recognition", model="openai/whisper-tiny", 
-        )
-
-    # Convert the audio to text with the whisper tiny model
-    response = pipe("./input.wav")
-    text_result = response["text"]
-
-    system_message = f"""Generate a haiku based on the given text.
-        A haiku is a short, Japanese poem typically with three lines. 
-        It follows a structure of 5 syllables in the first line, 7 in the second, and 5 in the third, 
-        totaling 17 syllables. 
-        Please respond with only the haiku and no additional text. 
-        """
-
-    messages = [{"role": "system", "content": system_message}]
-    messages.append({"role": "user", "content": text_result})
-
-    # Convert text to haiku
-    if hf_token is None or not getattr(hf_token, "token", None):
-        yield "⚠️ Please log in with your Hugging Face account first."
-        return
-    
-    client = InferenceClient(token=hf_token.token, model="openai/gpt-oss-20b")
-
-    response = ""
-
-    for chunk in client.chat_completion(
-        messages,
-        stream=True
-    ):
-        choices = chunk.choices
-        token = ""
-        if len(choices) and choices[0].delta.content:
-            token = choices[0].delta.content
-        response += token
-
-        yield response
-    
-
-
-with gr.Blocks(css=fancy_css) as demo:
+with gr.Blocks(css=CSS) as demo:
     with gr.Row():
         gr.Markdown("<h1 style='text-align: center; color: black'>⛩️ HaikuAI ⛩️</h1>")
         gr.LoginButton()
     with gr.Row():
         upload = gr.UploadButton(
-            label="📂 Upload Audio File (< 30 seconds)", file_types=[".mp3", ".wav", ".flac", ".mp4", ".m4a"]
+            label="📂 Upload Audio File (< 30 seconds)", file_types=[".mp3", ".wav", ".flac", ".mp4", ".m4a"], 
         )
     with gr.Row():
         submit = gr.Button("Submit")
     with gr.Row():
         output = gr.Textbox(label="Output", lines=5, interactive=False)
 
+    upload.upload(lambda: gr.Info("File uploaded."))
     submit.click(fn=respond, inputs=[upload], outputs=output)
 
 if __name__ == "__main__":
