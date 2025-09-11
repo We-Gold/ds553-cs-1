@@ -27,6 +27,11 @@ need to make sure the secret is set for the space.
 
 ## Running Locally
 
+Easier running:
+
+- `pip install -r requirements.txt`
+- `python app.py`
+
 For all development, run locally.
 
 To do this, use Docker!
