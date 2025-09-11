@@ -24,12 +24,29 @@ def load_audio_file(file):
     except:
         raise gr.Error("Make sure a valid file is already uploaded.")
     
-def build_message_prompt(text):
-    system_message = f"""Generate a haiku based on the given text.
+def build_message_prompt(text, mode):
+    if mode == "Haiku":
+        system_message = f"""Generate a haiku based on the given text.
         A haiku is a short, Japanese poem typically with three lines. 
         It follows a structure of 5 syllables in the first line, 7 in the second, and 5 in the third, 
         totaling 17 syllables. 
         Please respond with only the haiku and no additional text. 
+        """
+    elif mode == "Rap":
+        system_message = f"""Generate a short rap based on the given text.
+        A rap is a rhythmic and rhyming speech that often tells a story or conveys a message.
+        Please respond with only the rap and no additional text.
+        """
+    elif mode == "Roast":
+        system_message = f"""Generate a roast based on the given text.
+        A roast is a humorous and often exaggerated insult or critique, typically delivered in a light-hearted manner.
+        Please respond with only the roast and no additional text.
+        """
+    elif mode == "Brainrot":
+        system_message = f"""Generate a brainrot based on the given text.
+        Brainrot consists of poor-quality, humorous and absurd writing that often involves nonsensical use of content about
+        2023-2025 Internet slang terms such as 6-7, negative aura, crashout, mogging, gyatt, sigma, skibidi, and rizz.
+        Please respond with only the brainrot and no additional text.
         """
 
     messages = [{"role": "system", "content": system_message}]
@@ -37,7 +54,7 @@ def build_message_prompt(text):
 
     return messages
 
-def respond(file, hf_token: gr.OAuthToken):
+def respond(file, mode, hf_token: gr.OAuthToken):
     global pipe
 
     input_sound = load_audio_file(file)
@@ -52,9 +69,9 @@ def respond(file, hf_token: gr.OAuthToken):
     response = pipe(LOCAL_AUDIO_FILE)
     text_result = response["text"]
 
-    messages = build_message_prompt(text_result)
+    messages = build_message_prompt(text_result, mode)
 
-    # Convert text to haiku
+    # Convert text to new style
     if hf_token is None or not getattr(hf_token, "token", None):
         yield "⚠️ Please log in with your Hugging Face account first."
         return
@@ -120,16 +137,18 @@ CSS = """
 
 with gr.Blocks(css=CSS) as demo:
     with gr.Row():
-        gr.Markdown("<h1 style='text-align: center; color: black'>⛩️ HaikuAI ⛩️</h1>")
+        gr.Markdown("<h1 style='text-align: center; color: black'> Well-Versed AI </h1>")
         gr.LoginButton()
     with gr.Row():
         mic = gr.Audio(label="🎙️ Microphone or Upload (< 30 seconds)", type="filepath")
     with gr.Row():
         submit = gr.Button("Submit")
     with gr.Row():
+        style_select = gr.Radio(["Haiku", "Rap", "Roast", "Brainrot"], label="Select output style", value="Haiku")
+    with gr.Row():
         output = gr.Textbox(label="Output", lines=5, interactive=False)
 
-    submit.click(fn=respond, inputs=mic, outputs=output)
+    submit.click(fn=respond, inputs=[mic,style_select], outputs=output)
   
 
 if __name__ == "__main__":
